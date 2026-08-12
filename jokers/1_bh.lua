@@ -24,7 +24,7 @@ SMODS.Joker{ --Adasaurus
         h = 95 * 1
     },
     cost = 6,
-    rarity = 2,
+    rarity = 1,
     blueprint_compat = true,
     demicoloncompat = true,
     eternal_compat = true,
@@ -50,14 +50,14 @@ SMODS.Joker{ --Barracuda
     key = "barracuda",
     config = {
         extra = {
-            repetitions = 1
+            repetitions = 2
         }
     },
     loc_txt = {
         ['name'] = 'Barracuda',
         ['text'] = {
             [1] = 'Retrigger each played',
-            [2] = '{C:attention}6, 7, 8, 9 or 10{}'
+            [2] = '{C:attention}6, 7, 8, 9 or 10{} twice'
         },
         ['unlock'] = {
             [1] = ''
@@ -96,8 +96,8 @@ SMODS.Joker{ --Giganotosaurus
     key = "giganotosaurus",
     config = {
         extra = {
-            hands = 2,
-            Xmult = 6,
+            hands = 1,
+            Xmult = 12,
             round = 0
         }
     },
@@ -157,6 +157,7 @@ SMODS.Joker{ --Megalodon
     key = "megalodon",
     config = {
         extra = {
+            mult = 1,
             chips = 1,
             scale = 1
         }
@@ -164,10 +165,11 @@ SMODS.Joker{ --Megalodon
     loc_txt = {
         ['name'] = 'Megalodon',
         ['text'] = {
-            [1] = 'This Joker gains {X:blue,C:white}X#2#{} Chips',
-            [2] = 'when a {C:blue}Bonus Card{} is scored',
-            [3] = '{C:inactive}(Currently{} {X:blue,C:white}X#1#{}{C:inactive} Chips){}',
-            [4] = '{C:inactive}Art by 1.2m^2 Fungus Room{}'
+            [1] = 'When a {C:red}Mult Card{} / {C:blue}Bonus Card{}',
+            [2] = 'is scored, this Joker gains',
+            [3] = '{X:red,C:white}X#3#{} Mult / {X:blue,C:white}X#3#{} Chips respectively',
+            [4] = '{C:inactive}(Currently{} {X:red,C:white}X#1#{}{C:inactive} Mult, {}{X:blue,C:white}X#2#{}{C:inactive} Chips){}',
+            [5] = '{C:inactive}Art by 1.2m^2 Fungus Room{}'
         },
         ['unlock'] = {
             [1] = ''
@@ -201,12 +203,17 @@ SMODS.Joker{ --Megalodon
     
     loc_vars = function(self, info_queue, card)
         
-        return {vars = {card.ability.extra.chips, card.ability.extra.scale}}
+        return {vars = {card.ability.extra.mult, card.ability.extra.chips, card.ability.extra.scale}}
     end,
     
     calculate = function(self, card, context)
         if context.individual and context.cardarea == G.play  and not context.blueprint then
-            if SMODS.get_enhancements(context.other_card)["m_bonus"] == true then
+            if SMODS.get_enhancements(context.other_card)["m_mult"] == true then
+                card.ability.extra.mult = (card.ability.extra.mult) + card.ability.extra.scale
+                return {
+                    message = localize('k_upgrade_ex')
+                }
+            elseif SMODS.get_enhancements(context.other_card)["m_bonus"] == true then
                 card.ability.extra.chips = (card.ability.extra.chips) + card.ability.extra.scale
                 return {
                     message = localize('k_upgrade_ex')
@@ -215,11 +222,13 @@ SMODS.Joker{ --Megalodon
         end
         if context.cardarea == G.jokers and context.joker_main  then
             return {
+                Xmult = card.ability.extra.mult,
                 x_chips = card.ability.extra.chips,
             }
         end
         if context.forcetrigger then
             return {
+                Xmult = card.ability.extra.mult,
                 x_chips = card.ability.extra.chips,
             }
         end
@@ -238,8 +247,8 @@ SMODS.Joker{ --Orca (v36.0-36.1)
         ['name'] = 'Orca (v36.0-36.1)',
         ['text'] = {
             [1] = '{X:red,C:white}X#2#{} Mult',
-            [2] = 'sets to {X:red,C:white}X#1#{} Mult when',
-            [3] = '{C:attention}Boss Blind{} is defeated'
+            [2] = 'sets to {X:red,C:white}X#1#{} Mult',
+            [3] = 'after 3 rounds {C:inactive}#3#/3{}'
         },
         ['unlock'] = {
             [1] = ''
@@ -264,30 +273,28 @@ SMODS.Joker{ --Orca (v36.0-36.1)
     atlas = 'CustomJokers',
 
     loc_vars = function(self, info_queue, card)
-        return {vars = {card.ability.extra.patch, card.ability.extra.mult}}
+        return {vars = {card.ability.extra.patch, card.ability.extra.mult, card.ability.extra.dead}}
     end,
 
     calculate = function(self, card, context)
-        if context.cardarea == G.jokers and context.joker_main  then
+        if context.cardarea == G.jokers and context.joker_main or context.forcetrigger then
                 return {
                     Xmult = card.ability.extra.mult
                 }
         end
-        if (context.end_of_round and context.main_eval and G.GAME.blind.boss  and not context.blueprint) or context.forcetrigger then
-            if (card.ability.extra.dead or 0) == 0 then
+        if (context.end_of_round and context.main_eval and not context.blueprint) then
+            if (card.ability.extra.dead or 0) < 3 then
                 return {
                     func = function()
-                    card.ability.extra.dead = 1
+                    card.ability.extra.dead = card.ability.extra.dead + 1
                     return true
-                end,
-                    extra = {
-                        func = function()
-                    card.ability.extra.mult = card.ability.extra.patch
-                    return true
-                end,
-                            message = "Patched!",
-                        colour = G.C.BLUE
-                        }
+                    end
+                }
+            else
+                card.ability.extra.mult = card.ability.extra.patch
+                return {
+                    message = "Patched!",
+                    colour = G.C.BLUE
                 }
             end
         end
@@ -307,7 +314,7 @@ SMODS.Joker{ --Pouakai (v36-38)
             [1] = '{X:attention,C:white}=#2#{} hand size',
             [2] = 'when {C:attention}Blind{} is selected',
             [3] = '{C:attention}+#1#{} hand size',
-            [4] = 'when a {C:attention}hand{} is played'
+            [4] = 'when a {C:attention}hand{} is played or discarded'
         },
         ['unlock'] = {
             [1] = ''
@@ -344,7 +351,7 @@ SMODS.Joker{ --Pouakai (v36-38)
     end,
 
     calculate = function(self, card, context)
-        if context.cardarea == G.jokers and context.joker_main or context.forcetrigger then
+        if (context.cardarea == G.jokers and context.joker_main) or context.pre_discard or context.forcetrigger then
                 return {
                     func = function()
                 card_eval_status_text(context.blueprint_card or card, 'extra', nil, nil, nil, {message = "+"..tostring(card.ability.extra.handsizemod).." Hand Size", colour = G.C.BLUE})
@@ -383,7 +390,7 @@ SMODS.Joker{ --Stupid Owl Stall
     key = "stupidowlstall",
     config = {
         extra = {
-            hands = 1,
+            hands = 2,
             chips = 0,
             odds = 2,
             round = 0
@@ -451,7 +458,7 @@ SMODS.Joker{ --T-rex (v44-53)
             [1] = 'Each played card gives',
             [2] = '{X:red,C:white}X#1#{} Mult when scored',
             [3] = '{X:red,C:white}X#2#{} Mult instead when',
-            [4] = 'scoring card is a {C:attention}Mult Card{}'
+            [4] = 'scoring card is a {C:attention}Enchanced Card{}'
         },
         ['unlock'] = {
             [1] = 'Unlocked by default.'
@@ -482,7 +489,15 @@ SMODS.Joker{ --T-rex (v44-53)
 
     calculate = function(self, card, context)
         if context.individual and context.cardarea == G.play  then
-            if SMODS.get_enhancements(context.other_card)["m_mult"] == true then
+            if (function()
+                local enhancements = SMODS.get_enhancements(context.other_card)
+                for k, v in pairs(enhancements) do
+                    if v then
+                        return true
+                    end
+                end
+                return false
+            end)() then
                 return {
                     Xmult = lenient_bignum(card.ability.extra.xmult * 2)
                 }
