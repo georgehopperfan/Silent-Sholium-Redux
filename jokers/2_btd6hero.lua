@@ -10,8 +10,8 @@ SMODS.Joker{ --Brickell
         ['name'] = 'Brickell',
         ['text'] = {
             [1] = '{X:red,C:white}X#2#{} Mult every {C:attention}reroll{}',
-            [2] = 'resets at end of round',
-            [3] = '{C:inactive}(Currently {}{X:red,C:white}X#1#{}{C:inactive} Mult){}'
+            [2] = 'decrease by {X:red,C:white}5{} at end of round',
+            [3] = '{C:inactive}(Currently {}{X:red,C:white}X#1#{}{C:inactive} Mult, at least 1){}'
         },
         ['unlock'] = {
             [1] = ''
@@ -57,7 +57,7 @@ SMODS.Joker{ --Brickell
         if context.end_of_round and context.game_over == false and context.main_eval  and not context.blueprint then
                 return {
                     func = function()
-                    card.ability.extra.Mult = 1
+                    card.ability.extra.Mult = math.max(1, card.ability.extra.Mult - 5)
                     return true
                 end
                 }
@@ -76,15 +76,15 @@ SMODS.Joker{ --Corvus (v43-48)
     config = {
         extra = {
             Remaining = 2,
-            chips = 8000,
+            chips = 2250,
             Spectral = 0
         }
     },
     loc_txt = {
-        ['name'] = 'Corvus (v43-48)',
+        ['name'] = 'Corvus (v45-48)',
         ['text'] = {
-            [1] = 'Create an {C:spectral}Immolate{}',
-            [2] = 'every {C:attention}3{} played hands',
+            [1] = 'Create an {C:spectral}Immolate{} and',
+            [2] = '{C:blue}+#2#{} Chips every {C:attention}3{} hands',
             [3] = '{C:inactive}#1# remaining{}'
         },
         ['unlock'] = {
@@ -114,7 +114,7 @@ SMODS.Joker{ --Corvus (v43-48)
     },
 
     loc_vars = function(self, info_queue, card)
-        return {vars = {card.ability.extra.Remaining}}
+        return {vars = {card.ability.extra.Remaining, card.ability.extra.chips}}
     end,
 
     calculate = function(self, card, context)
@@ -134,6 +134,7 @@ SMODS.Joker{ --Corvus (v43-48)
                 end
                 card.ability.extra.Remaining = 2
                 return {
+                    chips = card.ability.extra.chips,
                     message = created_consumable and localize('k_plus_spectral') or nil
                 }
             else
@@ -152,6 +153,9 @@ SMODS.Joker{ --Corvus (v43-48)
                         end
                     }))
                 end
+                return {
+                    chips = card.ability.extra.chips
+                }
           end
     end
 }
@@ -179,7 +183,7 @@ SMODS.Joker{ --Ezili
         h = 95 * 1
     },
     cost = 7,
-    rarity = 3,
+    rarity = 2,
     blueprint_compat = true,
     demicoloncompat = true,
     eternal_compat = true,
@@ -205,13 +209,16 @@ SMODS.Joker{ --Pat Fusty
     key = "patfusty",
     config = {
         extra = {
+            xmult = 0.2
         }
     },
     loc_txt = {
         ['name'] = 'Pat Fusty',
         ['text'] = {
             [1] = '{C:attention}+100{} Card selection limit',
-            [2] = '{C:inactive}big monke{}'
+            [2] = 'gives extra {X:red,C:white}X#1#{} Mult for',
+            [3] = 'each scoring card in played hand',
+            [4] = '{C:inactive}big monke{}'
         },
         ['unlock'] = {
             [1] = ''
@@ -234,7 +241,16 @@ SMODS.Joker{ --Pat Fusty
     discovered = true,
     atlas = 'CustomJokers',
 
+    loc_vars = function(self, info_queue, card)
+        return {vars = {card.ability.extra.xmult}}
+    end,
+
     calculate = function(self, card, context)
+        if context.cardarea == G.jokers and context.joker_main  then
+            return {
+            Xmult = 1 + (#context.scoring_hand or 0) * card.ability.extra.xmult
+            }
+        end
     end,
 
     add_to_deck = function(self, card, from_debuff)
@@ -247,17 +263,17 @@ SMODS.Joker{ --Pat Fusty
         SMODS.change_discard_limit(-100)
     end
 }
-SMODS.Joker{ --Rosalia (v43)
+SMODS.Joker{ --Rosalia (v44)
     key = "rosalia",
     config = {
         extra = {
-            chips = 43
+            xchips = 1.44
         }
     },
     loc_txt = {
-        ['name'] = 'Rosalia (v43)',
+        ['name'] = 'Rosalia (v44)',
         ['text'] = {
-            [1] = '{C:blue}+#1#{} Chips'
+            [1] = '{X:blue,C:white}X#1#{} Chips'
         },
         ['unlock'] = {
             [1] = ''
@@ -282,13 +298,13 @@ SMODS.Joker{ --Rosalia (v43)
     atlas = 'CustomJokers',
     
     loc_vars = function(self, info_queue, card)
-        return {vars = {card.ability.extra.chips}}
+        return {vars = {card.ability.extra.xchips}}
     end,
 
     calculate = function(self, card, context)
         if context.cardarea == G.jokers and context.joker_main or context.forcetrigger then
                 return {
-                    chips = card.ability.extra.chips
+                    x_chips = card.ability.extra.xchips
                 }
         end
     end
@@ -303,7 +319,7 @@ SMODS.Joker{ --Silas (v50)
     loc_txt = {
         ['name'] = 'Silas (v50)',
         ['text'] = {
-            [1] = 'Creates an {C:blue}Icicle{} when',
+            [1] = 'Creates a {C:dark_edition}Negative{} {C:blue}Icicle{} when',
             [2] = 'a booster pack is skipped',
             [3] = 'All {C:blue}Icicles{} and {C:blue}Icicle alts{} give {C:red}+#1#{} Mult',
             [4] = '{C:inactive}ski buddy silas{}'
@@ -347,7 +363,7 @@ SMODS.Joker{ --Silas (v50)
                             func = function()
                                 local joker_card = SMODS.add_card({ set = 'Joker', key = 'j_ssr_iciclez' })
                                 if joker_card then
-
+                                    joker_card:set_edition("e_negative", true)
 
                                 end
                                 G.GAME.joker_buffer = 0
