@@ -1092,7 +1092,7 @@ SMODS.Joker{ --tt5
             [1] = '{C:attention}Force-trigger{} Joker to the {C:attention}right{}',
             [2] = 'when Joker to the {C:attention}left{} is triggered,',
             [3] = '{C:attention}Force-trigger{} Joker to the {C:attention}left{}',
-            [4] = 'when Joker to the {C:attention}right{} is triggered,',
+            [4] = 'when Joker to the {C:attention}right{} is triggered',
         },
         ['unlock'] = {
             [1] = 'Unlocked by default.'

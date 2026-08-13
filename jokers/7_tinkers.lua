@@ -7,7 +7,7 @@ SMODS.Joker{ --Cobalt Joker
         ['name'] = 'Cobalt Joker',
         ['text'] = {
             [1] = '{C:attention}Retrigger{} the effect of',
-            [2] = 'Joker to the right'
+            [2] = 'Joker to the right twice'
         },
         ['unlock'] = {
             [1] = 'Unlocked by default.'
@@ -50,7 +50,7 @@ SMODS.Joker{ --Cobalt Joker
 			if context.other_card == G.jokers.cards[my_pos + 1] then
 				return {
 					message = localize("k_again_ex"),
-					repetitions = 1,
+					repetitions = 2,
 					card = card,
 				}
 			else
@@ -64,7 +64,7 @@ SMODS.Joker{ --Copper Joker
     key = "copperjoker",
     config = {
         extra = {
-            multiplier = 0.25,
+            multiplier = 0.5,
             base = 1
         }
     },
@@ -116,18 +116,15 @@ SMODS.Joker{ --Hepatizon Joker
     key = "hepatizonjoker",
     config = {
         extra = {
-            rep = 0,
-            current = 0
+            rep = 1,
         }
     },
     loc_txt = {
         ['name'] = 'Hepatizon Joker',
         ['text'] = {
             [1] = 'Retrigger all played cards {C:attention}#1#{} time(s)',
-            [2] = 'Gains {C:attention}+1{} repetition after playing {C:attention}3{}',
-            [3] = 'consecutive hands that',
-            [4] = 'contains a {C:attention}Straight{} {C:inactive}(#2#/3){}',
-            [5] = '{C:inactive}Maximum of 10 retriggers{}'
+            [2] = 'Gains {C:attention}+1{} repetition after playing a hand',
+            [3] = 'that contains a {C:attention}Straight{}',
         },
         ['unlock'] = {
             [1] = 'Unlocked by default.'
@@ -158,43 +155,20 @@ SMODS.Joker{ --Hepatizon Joker
     
     calculate = function(self, card, context)
         if context.before and context.cardarea == G.jokers  and not context.blueprint then
-            if (next(context.poker_hands["Straight"]) and to_big(card.ability.extra.current) < to_big(2)) then
+            if next(context.poker_hands["Straight"]) then
                 return {
                     func = function()
-                        card.ability.extra.current = (card.ability.extra.current) + 1
+                            card.ability.extra.rep = math.min(100, (card.ability.extra.rep) + 1)
                         return true
                     end,
                     message = localize('k_upgrade_ex')
-                }
-            elseif (next(context.poker_hands["Straight"]) and to_big(card.ability.extra.current) >= to_big(2)) then
-                return {
-                    func = function()
-                        card.ability.extra.current = 0
-                        return true
-                    end,
-                    message = localize('k_upgrade_ex'),
-                    extra = {
-                        func = function()
-                            card.ability.extra.rep = math.min(10, (card.ability.extra.rep) + 1)
-                            return true
-                        end,
-                        colour = G.C.GREEN
-                    }
-                }
-            elseif not (next(context.poker_hands["Straight"])) then
-                return {
-                    func = function()
-                        card.ability.extra.current = 0
-                        return true
-                    end,
-                    message = localize('k_reset')
                 }
             end
         end
         if context.forcetrigger then
             return {
             func = function()
-                card.ability.extra.rep = math.min(10, (card.ability.extra.rep) + 1)
+                card.ability.extra.rep = math.min(100, (card.ability.extra.rep) + 1)
                 return true
             end,
             message = localize('k_upgrade_ex')
@@ -202,7 +176,7 @@ SMODS.Joker{ --Hepatizon Joker
         end
         if context.repetition and context.cardarea == G.play and to_big(card.ability.extra.rep) > to_big(0) then
             return {
-                repetitions = math.min(10, (card.ability.extra.rep)),
+                repetitions = math.min(100, (card.ability.extra.rep)),
                 message = localize('k_again_ex')
             }
         end
@@ -213,7 +187,7 @@ SMODS.Joker{ --Nahuatl Joker
     key = "nahuatljoker",
     config = {
         extra = {
-            mod = 1,
+            mod = 2,
             mult = 0
         }
     },
@@ -277,7 +251,6 @@ SMODS.Joker{ --Rose Gold Joker
     key = "rosegoldjoker",
     config = {
         extra = {
-			chips = 0.7,
 			immutable = {
                 slots = 2
 			}
@@ -286,8 +259,7 @@ SMODS.Joker{ --Rose Gold Joker
     loc_txt = {
         ['name'] = 'Rose Gold Joker',
         ['text'] = {
-            [1] = '{C:attention}+#2#{} Consumable slots',
-            [2] = '{X:chips,C:white}X#1#{} Chips'
+            [1] = '{C:attention}+#1#{} Consumable slots',
         },
         ['unlock'] = {
             [1] = 'Unlocked by default.'
@@ -312,15 +284,7 @@ SMODS.Joker{ --Rose Gold Joker
 
     loc_vars = function(self, info_queue, card)
         
-        return {vars = {card.ability.extra.chips, card.ability.extra.immutable.slots}}
-    end,
-    
-    calculate = function(self, card, context)
-        if context.cardarea == G.jokers and context.joker_main and not context.blueprint then
-            return {
-                x_chips = card.ability.extra.chips
-            }
-        end
+        return {vars = {card.ability.extra.immutable.slots}}
     end,
     
     add_to_deck = function(self, card, from_debuff)
@@ -343,7 +307,7 @@ SMODS.Joker{ --Manyullyn Joker
     config = {
         extra = {
             mult = 1,
-            mod = 0.03
+            mod = 0.2
         }
     },
     loc_txt = {

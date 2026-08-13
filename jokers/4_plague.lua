@@ -2,8 +2,9 @@ SMODS.Joker{ --Bacteria
     key = "bacteria",
     config = {
         extra = {
-            c = 10,
-            m = 2,
+            chips = 20,
+            mult = 2,
+            xmult = 1.2,
             respect = 0
         }
     },
@@ -12,10 +13,11 @@ SMODS.Joker{ --Bacteria
         ['text'] = {
             [1] = '{C:blue}+#1#{} Chips',
             [2] = '{C:red}+#2#{} Mult',
-            [3] = 'create a copy of this {C:attention}Joker{}',
-            [4] = 'when {C:attention}Blind{} is selected',
-            [5] = '{C:inactive}(Removes {}{C:dark_edition}Negative{} {C:inactive}from copy,{}',
-            [6] = '{C:inactive}Must have room){}'
+            [3] = '{X:red,C:white}X#3#{} Mult',
+            [4] = 'create a copy of this {C:attention}Joker{}',
+            [5] = 'when {C:attention}Blind{} is selected',
+            [6] = '{C:inactive}(Removes {}{C:dark_edition}Negative{} {C:inactive}from copy,{}',
+            [7] = '{C:inactive}Must have room){}'
         },
         ['unlock'] = {
             [1] = ''
@@ -40,16 +42,19 @@ SMODS.Joker{ --Bacteria
     atlas = 'CustomJokers',
 
     loc_vars = function(self, info_queue, card)
-        return {vars = {card.ability.extra.c, card.ability.extra.m}}
+        return {vars = {card.ability.extra.chips, card.ability.extra.mult, card.ability.extra.xmult}}
     end,
 
     calculate = function(self, card, context)
         if context.cardarea == G.jokers and context.joker_main or context.forcetrigger then
                 return {
-                    chips = card.ability.extra.c,
+                    chips = card.ability.extra.chips,
                     extra = {
-                        mult = card.ability.extra.m
+                        mult = card.ability.extra.mult,
+                        extra = {
+                            Xmult = card.ability.extra.xmult,
                         }
+                    }
                 }
         end
         if context.setting_blind and not context.blueprint then
@@ -88,9 +93,7 @@ SMODS.Joker{ --Bioweapon
     key = "bioweapon",
     config = {
         extra = {
-            minusmod = 2,
             timesmod = 0.4,
-            minus = 0,
             times = 1
         }
     },
@@ -98,9 +101,9 @@ SMODS.Joker{ --Bioweapon
         ['name'] = 'Bioweapon',
         ['text'] = {
             [1] = 'This Joker gains',
-            [2] = '{C:red}-#1#{} Mult and {X:red,C:white}X#2#{} Mult',
+            [2] = '{X:red,C:white}X#1#{} Mult',
             [3] = 'at the end of round',
-            [4] = '{C:inactive}(Currently{} {C:red}#3#{}{C:inactive},{} {X:red,C:white}X#4#{} {C:inactive}Mult){}'
+            [4] = '{C:inactive}(Currently{} {X:red,C:white}X#2#{} {C:inactive}Mult){}'
         },
         ['unlock'] = {
             [1] = 'Unlocked by default.'
@@ -126,13 +129,12 @@ SMODS.Joker{ --Bioweapon
     
     loc_vars = function(self, info_queue, card)
         
-        return {vars = {card.ability.extra.minusmod, card.ability.extra.timesmod, card.ability.extra.minus, card.ability.extra.times}}
+        return {vars = {card.ability.extra.timesmod, card.ability.extra.times}}
     end,
     
     calculate = function(self, card, context)
         if context.cardarea == G.jokers and context.joker_main  then
             return {
-                mult = card.ability.extra.minus,
                 extra = {
                     Xmult = card.ability.extra.times
                 }
@@ -141,17 +143,10 @@ SMODS.Joker{ --Bioweapon
         if context.end_of_round and context.game_over == false and context.main_eval  and not context.blueprint then
             return {
                 func = function()
-                    card.ability.extra.minus = lenient_bignum(card.ability.extra.minus - card.ability.extra.minusmod)
+                    card.ability.extra.times = lenient_bignum(card.ability.extra.times + card.ability.extra.timesmod)
                     return true
                 end,
-                message = localize('k_upgrade_ex'),
-                extra = {
-                    func = function()
-                        card.ability.extra.times = lenient_bignum(card.ability.extra.times + card.ability.extra.timesmod)
-                        return true
-                    end,
-                    colour = G.C.GREEN
-                }
+                message = localize('k_upgrade_ex')
             }
         end
 		if context.forcetrigger then
@@ -181,8 +176,8 @@ SMODS.Joker{ --Fungus
         ['name'] = 'Fungus',
         ['text'] = {
             [1] = '{X:red,C:white}X#1#{} Mult',
-            [2] = '{C:blue}+#2#{} hands when',
-            [3] = '{C:attention}blind{} is selected'
+            [2] = '{C:blue}+#2#{} hands if played hand type',
+            [3] = 'hasn\'t been played this round before'
         },
         ['unlock'] = {
             [1] = 'Unlocked by default.'
@@ -211,19 +206,21 @@ SMODS.Joker{ --Fungus
     end,
 
     calculate = function(self, card, context)
-        if context.cardarea == G.jokers and context.joker_main  and not context.blueprint then
+        if context.cardarea == G.jokers and context.joker_main then
+            if not (G.GAME.hands[context.scoring_name] and G.GAME.hands[context.scoring_name].played_this_round > 1) then
                 return {
-                    Xmult = card.ability.extra.mult
-                }
-        end
-        if context.setting_blind  then
-                return {
+                    
                     func = function()
-                card_eval_status_text(context.blueprint_card or card, 'extra', nil, nil, nil, {message = "+"..tostring(card.ability.extra.hands).." Hand", colour = G.C.GREEN})
-                G.GAME.current_round.hands_left = G.GAME.current_round.hands_left + card.ability.extra.hands
-                return true
-            end
+                        card_eval_status_text(context.blueprint_card or card, 'extra', nil, nil, nil, {message = "+"..tostring(card.ability.extra.hands).." Hands", colour = G.C.GREEN})
+                        
+                        G.GAME.current_round.hands_left = G.GAME.current_round.hands_left + card.ability.extra.hands
+                        return true
+                    end
                 }
+            end
+            return {
+                Xmult = card.ability.extra.mult
+            }
         end
         if context.forcetrigger then
                 return {
@@ -241,14 +238,14 @@ SMODS.Joker{ --Nano-virus
     key = "nanovirus",
     config = {
         extra = {
-            discount_amount = '1'
+            discount_amount = '2'
         }
     },
     loc_txt = {
         ['name'] = 'Nano-virus',
         ['text'] = {
-            [1] = 'Everything in shop',
-            [2] = 'costs {C:money}$1{} less'
+            [1] = 'Rerolls and Items in shop',
+            [2] = 'cost {C:money}$1{} less'
         },
         ['unlock'] = {
             [1] = 'Unlocked by default.'
@@ -283,6 +280,14 @@ SMODS.Joker{ --Nano-virus
                 return true
             end
         }))
+        G.E_MANAGER:add_event(Event({
+            func = function()
+                G.GAME.round_resets.reroll_cost = G.GAME.round_resets.reroll_cost - 1
+                G.GAME.current_round.reroll_cost = math.max(0,
+                G.GAME.current_round.reroll_cost - 1)
+                return true
+            end
+        }))
     end,
     
     remove_from_deck = function(self, card, from_debuff)
@@ -291,6 +296,14 @@ SMODS.Joker{ --Nano-virus
                 for k, v in pairs(G.I.CARD) do
                 if v.set_cost then v:set_cost() end
                 end
+                return true
+            end
+        }))
+        G.E_MANAGER:add_event(Event({
+            func = function()
+                G.GAME.round_resets.reroll_cost = G.GAME.round_resets.reroll_cost + 1
+                G.GAME.current_round.reroll_cost = math.max(0,
+                G.GAME.current_round.reroll_cost + 1)
                 return true
             end
         }))
@@ -316,7 +329,7 @@ SMODS.Joker{ --Parasite
     config = {
         extra = {
             mult = 0,
-            mod = 5
+            mod = 6
         }
     },
     loc_txt = {
@@ -382,7 +395,7 @@ SMODS.Joker{ --Prion
     key = "prion",
     config = {
         extra = {
-            odds = 3,
+            odds = 2,
             ante_value = 1
         }
     },
@@ -465,8 +478,8 @@ SMODS.Joker{ --Virus
         ['name'] = 'Virus',
         ['text'] = {
             [1] = 'Create a random {C:rare}Rare{} Joker',
-            [2] = 'at the end of round',
-            [3] = '{C:inactive}(Must have room){}'
+            [2] = 'at the end of round {C:inactive}(Must have room){}',
+            [3] = 'Sets {C:gold}${} to {C:red}-6{} when sold'
         },
         ['unlock'] = {
             [1] = 'Unlocked by default.'
@@ -499,7 +512,6 @@ SMODS.Joker{ --Virus
       end,
 
     set_ability = function(self, card, initial)
-        card:set_eternal(true)
         card:add_sticker('rental', true)
     end,
 
@@ -552,6 +564,20 @@ SMODS.Joker{ --Virus
             return true
         end}, card)
           end
+        if context.selling_self  and not context.blueprint then
+            return {
+                
+                func = function()
+                    
+                    local current_dollars = G.GAME.dollars
+                    local target_dollars = -6
+                    local dollar_value = target_dollars - current_dollars
+                    ease_dollars(dollar_value)
+                    card_eval_status_text(context.blueprint_card or card, 'extra', nil, nil, nil, {message = "Set to $"..tostring(-6), colour = G.C.MONEY})
+                    return true
+                end
+            }
+        end
     end
 }
 if Talisman then
@@ -561,14 +587,13 @@ SMODS.Joker{ --Neurax worm
     config = {
         extra = {
             mult = 1.2,
-            odds = 2
         }
     },
     loc_txt = {
         ['name'] = 'Neurax worm',
         ['text'] = {
-            [1] = 'Each card held in hand has a',
-            [2] = '{C:green}#2# in #3#{} chance to {X:legendary,C:white}^#1#{} Mult'
+            [1] = 'Each card held in hand',
+            [2] = 'gives {X:legendary,C:white}^#1#{} Mult'
         },
         ['unlock'] = {
             [1] = 'Unlocked by default.'
@@ -605,18 +630,15 @@ SMODS.Joker{ --Neurax worm
       end,
 
     loc_vars = function(self, info_queue, card)
-        local new_numerator, new_denominator = SMODS.get_probability_vars(card, 1, card.ability.extra.odds, 'j_ssr_neuraxworm') 
-        return {vars = {card.ability.extra.mult, new_numerator, new_denominator}}
+        return {vars = {card.ability.extra.mult}}
     end,
 
     calculate = function(self, card, context)
         if context.individual and context.cardarea == G.hand and not context.end_of_round then
             if true then
-                if SMODS.pseudorandom_probability(card, 'group_0_ea22710b', 1, card.ability.extra.odds, 'j_ssr_neuraxworm', false) then
-					return {
-                        e_mult = card.ability.extra.mult
-				    }
-                end
+				return {
+                    e_mult = card.ability.extra.mult
+				}
             end
         end
         if context.forcetrigger then

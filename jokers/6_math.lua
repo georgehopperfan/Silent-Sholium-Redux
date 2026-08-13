@@ -29,7 +29,7 @@ SMODS.Joker{ --Boundary
         h = 95 * 1
     },
     cost = 6,
-    rarity = 3,
+    rarity = 2,
     blueprint_compat = true,
     demicoloncompat = true,
     eternal_compat = true,
@@ -50,8 +50,8 @@ SMODS.Joker{ --Normal distribution
     key = "normaldistribution",
     config = {
         extra = {
-            Xmult7 = 0.68,
-            Xmult68 = 0.13,
+            Xmult7 = 1,
+            Xmult68 = 0.17,
             Xmult59 = 0.03
         }
     },

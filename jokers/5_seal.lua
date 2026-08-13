@@ -7,10 +7,9 @@ SMODS.Joker{ --Blue Seal
     loc_txt = {
         ['name'] = 'Blue Seal',
         ['text'] = {
-            [1] = '{C:attention}-1{} Hand size',
-            [2] = 'Creates the {C:planet}Planet{} card of',
-            [3] = 'last played {C:attention}poker hand{}',
-            [4] = 'at end of round'
+            [1] = 'Creates the {C:planet}Planet{} card of',
+            [2] = 'last played {C:attention}poker hand{}',
+            [3] = 'at end of round'
         },
         ['unlock'] = {
             [1] = 'Unlocked by default.'
@@ -59,14 +58,6 @@ SMODS.Joker{ --Blue Seal
             card_eval_status_text(context.blueprint_card or card, 'extra', nil, nil, nil, {message = localize('k_plus_planet'), colour = G.C.SECONDARY_SET.Planet})
         end
     end,
-
-    add_to_deck = function(self, card, from_debuff)
-        G.hand:change_size(-1)
-    end,
-
-    remove_from_deck = function(self, card, from_debuff)
-        G.hand:change_size(1)
-    end
 }
 SMODS.Joker{ --Gold Seal
     key = "sealgold",
@@ -78,8 +69,7 @@ SMODS.Joker{ --Gold Seal
     loc_txt = {
         ['name'] = 'Gold Seal',
         ['text'] = {
-            [1] = '{C:attention}-1{} Hand size',
-            [2] = 'Earn {C:gold}$#1#{} when a hand is played'
+            [1] = 'Earn {C:gold}$#1#{} when a hand is played'
         },
         ['unlock'] = {
             [1] = 'Unlocked by default.'
@@ -115,14 +105,6 @@ SMODS.Joker{ --Gold Seal
                 }
         end
     end,
-
-    add_to_deck = function(self, card, from_debuff)
-        G.hand:change_size(-1)
-    end,
-
-    remove_from_deck = function(self, card, from_debuff)
-        G.hand:change_size(1)
-    end
 }
 SMODS.Joker{ --Purple Seal
     key = "sealpurple",
@@ -134,9 +116,8 @@ SMODS.Joker{ --Purple Seal
     loc_txt = {
         ['name'] = 'Purple Seal',
         ['text'] = {
-            [1] = '{C:attention}-1{} Hand size',
-            [2] = 'Create a random {C:tarot}Tarot{}',
-            [3] = 'when a hand is discarded'
+            [1] = 'Create a random {C:tarot}Tarot{}',
+            [2] = 'when a hand is discarded'
         },
         ['unlock'] = {
             [1] = 'Unlocked by default.'
@@ -183,14 +164,6 @@ SMODS.Joker{ --Purple Seal
                 }
         end
     end,
-
-    add_to_deck = function(self, card, from_debuff)
-        G.hand:change_size(-1)
-    end,
-
-    remove_from_deck = function(self, card, from_debuff)
-        G.hand:change_size(1)
-    end
 }
 SMODS.Joker{ --Red Seal
     key = "sealred",
@@ -202,8 +175,7 @@ SMODS.Joker{ --Red Seal
     loc_txt = {
         ['name'] = 'Red Seal',
         ['text'] = {
-            [1] = '{C:attention}-1{} Hand size',
-            [2] = 'Retrigger all played cards'
+            [1] = 'Retrigger all played cards'
         },
         ['unlock'] = {
             [1] = 'Unlocked by default.'
@@ -234,12 +206,4 @@ SMODS.Joker{ --Red Seal
                 }
         end
     end,
-
-    add_to_deck = function(self, card, from_debuff)
-        G.hand:change_size(-1)
-    end,
-
-    remove_from_deck = function(self, card, from_debuff)
-        G.hand:change_size(1)
-    end
 }
