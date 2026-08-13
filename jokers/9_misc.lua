@@ -22,7 +22,7 @@ SMODS.Joker{ --A deck
         h = 95 * 1
     },
     cost = 16,
-    rarity = 2,
+    rarity = 1,
     blueprint_compat = true,
     demicoloncompat = true,
     eternal_compat = true,
@@ -82,8 +82,8 @@ SMODS.Joker{ --Chocolatebar Quotes
         w = 71 * 1, 
         h = 95 * 1
     },
-    cost = 9,
-    rarity = 3,
+    cost = 7,
+    rarity = 2,
     blueprint_compat = true,
     demicoloncompat = true,
     eternal_compat = true,
@@ -113,7 +113,9 @@ SMODS.Joker{ --Doreo stream
         ['name'] = 'Doreo stream',
         ['text'] = {
             [1] = 'All cards count as {C:attention}7s{}',
-            [2] = '{C:inactive,s:0.7}\"new pixel art for sholatro joker\"{}'
+            [2] = 'Convert all scoring cards into {C:attention}7s{}',
+            [3] = 'on last hand of the round',
+            [4] = '{C:inactive,s:0.7}\"new pixel art for sholatro joker\"{}'
         },
         ['unlock'] = {
             [1] = 'Unlocked by default.'
@@ -137,6 +139,18 @@ SMODS.Joker{ --Doreo stream
     atlas = 'CustomJokers',
 
     calculate = function(self, card, context)
+        if context.individual and context.cardarea == G.play  and not context.blueprint then
+            if to_big(G.GAME.current_round.hands_left) <= to_big(0) then
+                local scored_card = context.other_card
+                G.E_MANAGER:add_event(Event({
+                    func = function()
+                        
+                        assert(SMODS.change_base(scored_card, nil, "7"))
+                        return true
+                    end
+                }))
+            end
+        end
     end,
 
     add_to_deck = function(self, card, from_debuff)
@@ -163,17 +177,17 @@ SMODS.Joker{ --Flash
     key = "flash",
     config = {
         extra = {
-            xmult = 1,
+            xmult = 2,
             ignore = 0
         }
     },
     loc_txt = {
         ['name'] = 'Flash',
         ['text'] = {
-            [1] = 'Create a {C:attention}Flash Card{}',
+            [1] = 'Create a {C:dark_edition}Negative{} {C:attention}Flash Card{}',
             [2] = 'when {C:green}shop{} is {C:attention}rerolled{}',
             [3] = 'Each {C:attention}Flash Card{} gives {X:red,C:white}X#1#{} Mult',
-            [4] = 'increase {X:red,C:white}XMult{} value by {X:red,C:white}0.5{}',
+            [4] = 'increase {X:red,C:white}XMult{} value by {X:red,C:white}2{}',
             [5] = 'when shop is rerolled'
         },
         ['unlock'] = {
@@ -218,7 +232,7 @@ SMODS.Joker{ --Flash
         if context.reroll_shop or context.forcetrigger then
                 return {
                     func = function()
-                    card.ability.extra.xmult = (card.ability.extra.xmult) + 0.5
+                    card.ability.extra.xmult = (card.ability.extra.xmult) + 2
                     return true
                 end,
                     extra = {
@@ -230,7 +244,7 @@ SMODS.Joker{ --Flash
                             G.GAME.joker_buffer = G.GAME.joker_buffer + 1
                             G.E_MANAGER:add_event(Event({
                                 func = function()
-                                    local joker_card = SMODS.add_card({ set = 'Joker', key = 'j_flash' })
+                                    local joker_card = SMODS.add_card({ set = 'Joker', key = 'j_flash', edition = 'e_negative'})
                                     if joker_card then
                                     end
                                     G.GAME.joker_buffer = 0
@@ -263,7 +277,7 @@ SMODS.Joker{ --Green Cookie
     config = {
         extra = {
             mult = 18,
-            multiplier = 1.03
+            multiplier = 1.05
         }
     },
     loc_txt = {
@@ -319,7 +333,7 @@ SMODS.Joker{ --Iciclez_
     loc_txt = {
         ['name'] = 'Iciclez_',
         ['text'] = {
-            [1] = 'Create {C:attention}an{} {C:blue}alt{}',
+            [1] = 'Create {C:attention}2{} {C:blue}alts{}',
             [2] = 'when {C:attention}Blind{} is selected'
         },
         ['unlock'] = {
@@ -352,11 +366,12 @@ SMODS.Joker{ --Iciclez_
             G.E_MANAGER:add_event(Event({
                 func = function()
                     local joker_card = SMODS.add_card({ set = 'Joker', key = 'j_ssr_iciclezalt' })
-                    if joker_card then
-                        
-                        
-                    end
-                    
+                    return true
+                end
+            }))
+            G.E_MANAGER:add_event(Event({
+                func = function()
+                    local joker_card = SMODS.add_card({ set = 'Joker', key = 'j_ssr_iciclezalt' })
                     return true
                 end
             }))
@@ -375,7 +390,7 @@ SMODS.Joker{ --Iciclez_ alt
     config = {
 		extra = {
 			mult = 1.1,
-			slots = 1
+			slots = 1.1
 		}
     },
     loc_txt = {
@@ -449,7 +464,7 @@ SMODS.Joker{ --Issimo
     config = {
         extra = {
             ante = 1,
-            cash = 50
+            cash = 100
         }
     },
     loc_txt = {
@@ -527,7 +542,6 @@ SMODS.Joker{ --Literally Cryptid
         ['text'] = {
             [1] = 'if played hand is exactly {C:attention}1{} card,',
             [2] = 'create {C:attention}2{} copies of that card',
-            [3] = 'and {C:red}self-destruct{}'
         },
         ['unlock'] = {
             [1] = 'Unlocked by default.'
@@ -551,22 +565,8 @@ SMODS.Joker{ --Literally Cryptid
     atlas = 'CustomJokers',
     
     calculate = function(self, card, context)
-        if context.cardarea == G.jokers and context.joker_main  and not context.blueprint then
+        if context.cardarea == G.jokers and context.before and not context.blueprint then
             if to_big(#context.full_hand) == to_big(1) then
-                local target_joker = card
-                
-                if target_joker then
-                    if target_joker.ability.eternal then
-                        target_joker.ability.eternal = nil
-                    end
-                    target_joker.getting_sliced = true
-                    G.E_MANAGER:add_event(Event({
-                        func = function()
-                            target_joker:start_dissolve({G.C.RED}, nil, 1.6)
-                            return true
-                        end
-                    }))
-                end
                 for i = 1, 2 do
                     local cards_to_copy = {}
                     local target_index = 1
@@ -604,8 +604,7 @@ SMODS.Joker{ --Literally The Soul
         ['name'] = 'Literally The Soul',
         ['text'] = {
             [1] = 'Creates a {C:legendary}Legendary{} Joker',
-            [2] = 'and {C:red}self-destruct{} when',
-            [3] = '{C:attention}Boss Blind{} is defeated'
+            [2] = 'when {C:attention}Boss Blind{} is defeated'
         },
         ['unlock'] = {
             [1] = 'Unlocked by default.'
@@ -633,16 +632,6 @@ SMODS.Joker{ --Literally The Soul
         if context.end_of_round and context.main_eval and G.GAME.blind.boss and not context.blueprint then
             return {
                 func = function()
-                    local target_joker = card
-                    if target_joker then
-                        target_joker.getting_sliced = true
-                        G.E_MANAGER:add_event(Event({
-                            func = function()
-                                target_joker:start_dissolve({G.C.RED}, nil, 1.6)
-                                return true
-                            end
-                        }))
-                    end
                     return true
                 end,
                 extra = {
@@ -693,14 +682,15 @@ SMODS.Joker{ --Pudding Egg
     key = "puddingegg",
     config = {
         extra = {
-            slots = 1
+            slots = 3
         }
     },
     loc_txt = {
         ['name'] = 'Pudding Egg',
         ['text'] = {
             [1] = '{C:dark_edition}+#1#{} Joker slot',
-            [2] = 'at end of round'
+            [2] = 'at end of round',
+            [3] = '{X:tarot,C:white}^0.1{} Mult per Joker owned'
         },
         ['unlock'] = {
             [1] = ''
@@ -737,8 +727,23 @@ SMODS.Joker{ --Pudding Egg
     end,
 
     calculate = function(self, card, context)
-        if context.end_of_round and context.game_over == false and context.main_eval or context.forcetrigger then
+        if context.end_of_round and context.game_over == false and context.main_eval then
                 return {
+                    func = function()
+                card_eval_status_text(context.blueprint_card or card, 'extra', nil, nil, nil, {message = "+"..tostring(card.ability.extra.slots).." Joker Slot", colour = G.C.DARK_EDITION})
+                G.jokers.config.card_limit = G.jokers.config.card_limit + card.ability.extra.slots
+                return true
+            end
+                }
+        end
+        if context.cardarea == G.jokers and context.joker_main then
+            return {
+                e_mult = math.max(1, (#(G.jokers and G.jokers.cards or {}) * 0.1 + 1))
+            }
+        end
+        if context.forcetrigger then
+                return {
+                e_mult = math.max(1, (#(G.jokers and G.jokers.cards or {}) * 0.1 + 1)),
                     func = function()
                 card_eval_status_text(context.blueprint_card or card, 'extra', nil, nil, nil, {message = "+"..tostring(card.ability.extra.slots).." Joker Slot", colour = G.C.DARK_EDITION})
                 G.jokers.config.card_limit = G.jokers.config.card_limit + card.ability.extra.slots
@@ -753,7 +758,7 @@ SMODS.Joker{ --Simultaneous Divergence
     config = {
         extra = {
             mult = 1,
-            scale = 0.2
+            scale = 1
         }
     },
     loc_txt = {

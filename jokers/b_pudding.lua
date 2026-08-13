@@ -47,7 +47,7 @@ SMODS.Joker{ --Samurai
         h = 95 * 1
     },
     cost = 7,
-    rarity = 2,
+    rarity = 1,
     blueprint_compat = false,
     eternal_compat = true,
     perishable_compat = true,
@@ -115,7 +115,7 @@ SMODS.Joker{ --Mabel
     
     calculate = function(self, card, context)
         if (context.cardarea == G.jokers and context.before) or context.forcetrigger then
-            local result = pseudorandom(pseudoseed("ssr_mabel"), 80, 128)
+            local result = pseudorandom(pseudoseed("ssr_mabel"), 80, 130)
             local check = false
             for i = 1, #G.jokers.cards do
                 if not (G.jokers.cards[i] == card) then
@@ -136,7 +136,7 @@ SMODS.Joker{ --Loaf
     key = "loaf",
     config = {
         extra = {
-            chips_mod = 5,
+            chips_mod = 10,
             chips = 0,
         }
     },
@@ -204,7 +204,7 @@ SMODS.Joker{ --Tom
     key = "tom",
     config = {
         extra = {
-            mult_mod = 1.6,
+            mult_mod = 2,
             mult = 0
         }
     },
@@ -272,7 +272,7 @@ SMODS.Joker{ --Ellen
     key = "ellen",
     config = {
         extra = {
-            xmult = 3
+            xmult = 6
         }
     },
     loc_txt = {
@@ -329,8 +329,8 @@ SMODS.Joker{ --King George
     key = "kinggeorge",
     config = {
         extra = {
-            eor = 2,
-            eor_mod = 0.3
+            eor = 3,
+            eor_mod = 1
         }
     },
     loc_txt = {
@@ -401,7 +401,7 @@ SMODS.Joker{ --Kings Council
     config = {
         extra = {
             xmult = 1,
-            xmult_mod = 0.3
+            xmult_mod = 1
         }
     },
     loc_txt = {
@@ -497,7 +497,7 @@ SMODS.Joker{ --Soundwave controller
     loc_txt = {
         ['name'] = 'Soundwave controller',
         ['text'] = {
-            [1] = '{C:red}+20X-5X^2{} Mult,',
+            [1] = '{C:red}+18X-3X^2{} Mult,',
             [2] = 'where {C:red}X{} is the value of',
             [3] = 'remaining hands'
         },
@@ -530,7 +530,7 @@ SMODS.Joker{ --Soundwave controller
     calculate = function(self, card, context)
         if context.cardarea == G.jokers and context.joker_main  then
             return {
-                mult = (20 * G.GAME.current_round.hands_left - 5 * (G.GAME.current_round.hands_left ^ 2))
+                mult = (18 * G.GAME.current_round.hands_left - 3 * (G.GAME.current_round.hands_left ^ 2))
             }
         end
     end
@@ -547,11 +547,12 @@ SMODS.Joker{ --The Tree is Loud
     loc_txt = {
         ['name'] = 'The Tree is Loud',
         ['text'] = {
-            [1] = 'This Joker gains {C:money}$#1#{} of {C:attention}sell value{}',
-            [2] = 'when each played {C:attention}3{} is scored',
-            [3] = 'Creates a copy of this card if sold',
-            [4] = 'at more than {C:money}$30{} of sell value',
-            [5] = '{C:inactive}The Three\'s endowed?{}'
+            [1] = 'This Joker adds {C:money}$#1#{} of {C:attention}sell value{}',
+            [2] = 'to all held Jokers and consumables',
+            [3] = 'when each played {C:attention}3{} is scored',
+            [4] = 'Creates a copy of this card if sold',
+            [5] = 'at more than {C:money}$30{} of sell value',
+            [6] = '{C:inactive}The Three\'s endowed?{}'
         },
         ['unlock'] = {
             [1] = 'Unlocked by default.'
@@ -583,19 +584,18 @@ SMODS.Joker{ --The Tree is Loud
     calculate = function(self, card, context)
         if context.individual and context.cardarea == G.play  and not context.blueprint then
             if context.other_card:get_id() == 3 then
-                local my_pos = nil
-                local check = false
-                for i = 1, #G.jokers.cards do
-                    if G.jokers.cards[i] == card then
-                        check = true
-                        my_pos = i
-                        break
+                return {
+                func = function()
+                    for _, area in ipairs({ G.jokers, G.consumeables }) do
+                        for i, target_card in ipairs(area.cards) do
+                            if target_card.set_cost then
+                                target_card.ability.extra_value = (card.ability.extra_value or 0) + card.ability.extra.increase
+                                target_card:set_cost()
+                            end
+                        end
                     end
-                end
-                local target_card = G.jokers.cards[my_pos]
-                target_card.ability.extra_value = (card.ability.extra_value or 0) + card.ability.extra.increase
-                target_card:set_cost()
-			if check then
+                    return true
+                end,
 				card_eval_status_text(
 					card,
 					"extra",
@@ -604,7 +604,7 @@ SMODS.Joker{ --The Tree is Loud
 					nil,
 					{ message = localize('k_upgrade_ex'), colour = G.C.GREEN }
 				)
-			end
+                }
             end
         end
 
@@ -623,16 +623,27 @@ SMODS.Joker{ --The Tree is Loud
         end -- bloonlatro op
 
         if context.forcetrigger then
-            local my_pos = nil
-            for i = 1, #G.jokers.cards do
-                if G.jokers.cards[i] == card then
-                    my_pos = i
-                    break
-                end
-            end
-            local target_card = G.jokers.cards[my_pos]
-            target_card.ability.extra_value = (card.ability.extra_value or 0) + card.ability.extra.increase
-            target_card:set_cost()
+                return {
+                func = function()
+                    for _, area in ipairs({ G.jokers, G.consumeables }) do
+                        for i, target_card in ipairs(area.cards) do
+                            if target_card.set_cost then
+                                target_card.ability.extra_value = (card.ability.extra_value or 0) + card.ability.extra.increase
+                                target_card:set_cost()
+                            end
+                        end
+                    end
+                    return true
+                end,
+				card_eval_status_text(
+					card,
+					"extra",
+					nil,
+					nil,
+					nil,
+					{ message = localize('k_upgrade_ex'), colour = G.C.GREEN }
+				)
+                }
         end
     end
 }
@@ -649,8 +660,8 @@ SMODS.Joker{ --Ninja Kiwi balance be like
         ['name'] = 'Ninja Kiwi balance be like',
         ['text'] = {
             [1] = 'At the end of round,',
-            [2] = '{C:attention}Increase{} value of Joker to the {C:attention}right{} by {C:attention}50%{},',
-            [3] = '{C:attention}Decrease{} value of Joker to the {C:attention}left{} by {C:attention}50%{}',
+            [2] = '{C:attention}Increase{} value of Joker to the {C:attention}right{} by {C:attention}2x{},',
+            [3] = '{C:attention}Decrease{} value of Joker to the {C:attention}left{} by {C:attention}0.5x{}',
             [4] = 'if both Jokers have mutable values'
         },
         ['unlock'] = {
@@ -689,7 +700,7 @@ SMODS.Joker{ --Ninja Kiwi balance be like
 					if i < #G.jokers.cards and i >1 then
 						if not (Card.no(G.jokers.cards[i + 1], "immutable", true) or Card.no(G.jokers.cards[i - 1], "immutable", true)) then
 							check = true
-							Cryptid.manipulate(G.jokers.cards[i + 1], { value = 1.5 })
+							Cryptid.manipulate(G.jokers.cards[i + 1], { value = 2 })
 							Cryptid.manipulate(G.jokers.cards[i - 1], { value = 0.5 })
 						end
 					end
@@ -732,7 +743,7 @@ SMODS.Joker{ --Ten the purples
         w = 71 * 1, 
         h = 95 * 1
     },
-    cost = 3,
+    cost = 2,
     rarity = 1,
     blueprint_compat = false,
     eternal_compat = true,
@@ -830,7 +841,7 @@ SMODS.Joker{ --Bing Bong
                 return {
                     func = function()
                         card_eval_status_text(context.blueprint_card or card, 'extra', nil, nil, nil, {message = "You Peaked!", colour = G.C.DARK_EDITION})
-                        G.jokers.config.card_limit = G.jokers.config.card_limit + 1
+                        G.jokers.config.card_limit = G.jokers.config.card_limit + 5
                         return true
                     end,
                     extra = {
@@ -851,7 +862,7 @@ SMODS.Joker{ --coconut
     config = {
         extra = {
             hand_size_increase = '1',
-            chips = 125
+            chips = 150
         }
     },
     loc_txt = {
@@ -930,7 +941,7 @@ SMODS.Joker{ --lollipop
         h = 95 * 1
     },
     cost = 5,
-    rarity = 2,
+    rarity = 1,
     blueprint_compat = false,
     eternal_compat = false,
     perishable_compat = true,
@@ -972,8 +983,8 @@ SMODS.Joker{ --Sports drink
     key = "sportsdrink",
     config = {
         extra = {
-            xchips = 3.5,
-            xchipsmod = 0.1
+            xchips = 6,
+            xchipsmod = 0.2
         }
     },
     loc_txt = {
@@ -1063,8 +1074,7 @@ SMODS.Joker{ -- Fortified Milk
     config = {
         extra = {
             active = 0,
-            scale0 = 1,
-            rotation0 = 1
+            death = 0
         }
     },
     loc_txt = {
@@ -1072,7 +1082,7 @@ SMODS.Joker{ -- Fortified Milk
         ['text'] = {
             [1] = 'At the end of round,',
             [2] = 'if scored chips is less than required,',
-            [3] = '{C:attention}prevents death{} until the end of this ante',
+            [3] = '{C:attention}prevents death{} until the end of next ante',
             [4] = 'and {C:red}self-destructs{} afterwards'
         },
         ['unlock'] = {
@@ -1087,7 +1097,7 @@ SMODS.Joker{ -- Fortified Milk
         w = 71 * 1, 
         h = 95 * 1
     },
-    cost = 6,
+    cost = 5,
     rarity = 2,
     blueprint_compat = false,
     eternal_compat = false,
@@ -1132,6 +1142,9 @@ SMODS.Joker{ -- Fortified Milk
         end
         if context.ante_change  and not context.blueprint then
             if to_big(card.ability.extra.active) ~= to_big(0) then
+                if to_big(card.ability.extra.death) == to_big(0) then
+                    card.ability.extra.death = 1
+                else
                 return {
                     func = function()
                         local target_joker = card
@@ -1150,6 +1163,7 @@ SMODS.Joker{ -- Fortified Milk
                     end
                 }
             end
+            end
         end
     end
 }
@@ -1157,17 +1171,15 @@ SMODS.Joker{ --Ancient idol
     key = "ancientidol",
     config = {
         extra = {
-            slot_change = '1',
-            xmult = 3
+            xmult = 5
         }
     },
     loc_txt = {
         ['name'] = 'Ancient idol',
         ['text'] = {
-            [1] = '{C:red}-1{} consumable slot',
-            [2] = 'Each {C:attention}#2#{} held in hand',
-            [3] = 'give {X:red,C:white}X#1#{} Mult',
-            [4] = '{C:inactive}rank changes every round{}'
+            [1] = 'Each {C:attention}#2#{} held in hand',
+            [2] = 'give {X:red,C:white}X#1#{} Mult',
+            [3] = '{C:inactive}rank changes every round{}'
         },
         ['unlock'] = {
             [1] = 'Unlocked by default.'
@@ -1223,20 +1235,6 @@ SMODS.Joker{ --Ancient idol
                  Xmult = lenient_bignum(card.ability.extra.xmult)
             }
 		end
-    end,
-    
-    add_to_deck = function(self, card, from_debuff)
-        G.E_MANAGER:add_event(Event({func = function()
-            G.consumeables.config.card_limit = math.max(0, G.consumeables.config.card_limit - 1)
-            return true
-        end }))
-    end,
-    
-    remove_from_deck = function(self, card, from_debuff)
-        G.E_MANAGER:add_event(Event({func = function()
-            G.consumeables.config.card_limit = G.consumeables.config.card_limit + 1
-            return true
-        end }))
     end
 }
 
@@ -1250,7 +1248,9 @@ SMODS.Joker{ --Ramen the Cat
         ['name'] = 'Ramen the Cat',
         ['text'] = {
             [1] = 'All listed {C:green}probabilities{} are',
-            [2] = 'Multiplied by {C:green}1000000{}'
+            [2] = 'Multiplied by {C:green}1000000{}',
+            [3] = 'Creates a {C:dark_edition}Negative{} {C:attention}Lucky Cat{}',
+            [4] = 'when Boss Blind is defeated'
         },
         ['unlock'] = {
             [1] = 'Unlocked by default.'
@@ -1282,6 +1282,30 @@ SMODS.Joker{ --Ramen the Cat
                 denominator = denominator
             }
         end
+        if context.end_of_round and context.game_over == false and context.main_eval and G.GAME.blind.boss and not context.blueprint then
+                return {
+                    func = function()
+            local created_joker = true
+            G.E_MANAGER:add_event(Event({
+                func = function()
+                    local joker_card = SMODS.add_card({ set = 'Joker', key = 'j_lucky_cat' })
+                    if joker_card then
+                        joker_card:set_edition("e_negative", true)
+                        
+                    end
+                    
+                    return true
+                end
+            }))
+            
+            if created_joker then
+                card_eval_status_text(context.blueprint_card or card, 'extra', nil, nil, nil, {message = localize('k_plus_joker'), colour = G.C.BLUE})
+            end
+            return true
+        end
+                }
+        end
+
     end
 }
 if Talisman then
@@ -1291,7 +1315,7 @@ SMODS.Joker{ --The Pudding
     config = {
         extra = {
             operator = 0,
-            mult = 1.8
+            mult = 18
         }
     },
     loc_txt = {
@@ -1300,7 +1324,7 @@ SMODS.Joker{ --The Pudding
             [1] = '{X:dark_edition,C:white}#1#{} Mult',
             [2] = '{X:dark_edition,C:white}operator{} increases once if',
             [3] = 'played hand contains a',
-            [4] = '{C:attention}Straight Flush{} and {C:attention}7{} of {C:clubs}Clubs{}',
+            [4] = '{C:attention}Straight Flush{} and a {C:attention}7{}',
         },
         ['unlock'] = {
             [1] = ''
@@ -1343,14 +1367,6 @@ SMODS.Joker{ --The Pudding
                 local count = 0
                 for _, playing_card in pairs(context.full_hand or {}) do
                     if playing_card:get_id() == 7 then
-                        count = count + 1
-                    end
-                end
-                return count >= 1
-            end)() and (function()
-                local count = 0
-                for _, playing_card in pairs(context.full_hand or {}) do
-                    if playing_card:is_suit("Clubs") then
                         count = count + 1
                     end
                 end
